@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <radialGradient id="disc" cx=".3" cy=".2" r=".9"><stop stop-color="#2d153f"/><stop offset="1" stop-color="#0a0510"/></radialGradient>
+    <linearGradient id="chrome" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f9dcff"/><stop offset=".26" stop-color="#bc46ff"/><stop offset=".48" stop-color="#7d0cba"/><stop offset=".65" stop-color="#ec9fff"/><stop offset="1" stop-color="#9111d2"/></linearGradient>
+    <linearGradient id="slash" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#a526f0"/><stop offset=".45" stop-color="#ee9bff"/><stop offset=".55" stop-color="#fff0ff"/><stop offset="1" stop-color="#b83df6"/></linearGradient>
+    <clipPath id="round"><circle cx="32" cy="32" r="31"/></clipPath>
+  </defs>
+  <g clip-path="url(#round)">
+    <circle cx="32" cy="32" r="31" fill="url(#disc)" stroke="#8d53ba" stroke-width="1.5"/>
+    <path d="M13 16h11l27 33H39L13 16Zm27 0h11L24 49H13l27-33Z" fill="url(#chrome)" stroke="#d17af2" stroke-width=".45"/>
+    <path d="M8 55C20 34 38 18 57 8 38 24 24 39 8 55Z" fill="url(#slash)" stroke="#eab0ff" stroke-width=".45"/>
+  </g>
+</svg>
