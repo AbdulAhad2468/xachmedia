@@ -15,8 +15,12 @@ export const metadata = {
   },
   twitter: { card: 'summary_large_image' },
   icons: {
-    icon: [{ url: '/favicon.svg?v=2', type: 'image/svg+xml', sizes: 'any' }, { url: '/favicon-32.png?v=2', type: 'image/png', sizes: '32x32' }],
-    shortcut: '/favicon-32.png?v=2',
+    icon: [
+      { url: '/favicon-96.png', type: 'image/png', sizes: '96x96' },
+      { url: '/favicon-48.png', type: 'image/png', sizes: '48x48' },
+      { url: '/favicon.ico', type: 'image/x-icon', sizes: '32x32 48x48 96x96' },
+    ],
+    shortcut: '/favicon.ico',
     apple: '/apple-touch-icon.png',
   },
 };
