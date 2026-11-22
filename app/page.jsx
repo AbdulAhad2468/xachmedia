@@ -64,6 +64,8 @@ export default function Home() {
   const [compactServices, setCompactServices] = useState(false);
   const [selectedServices, setSelectedServices] = useState([]);
   const [brief, setBrief] = useState(null);
+  const [briefPayload, setBriefPayload] = useState(null);
+  const [sendState, setSendState] = useState({ status: "idle", message: "" });
   const [copyState, setCopyState] = useState("");
   const [year, setYear] = useState(2026);
   const sceneRef = useRef(null);
@@ -74,6 +76,8 @@ export default function Home() {
   const pointerFrameRef = useRef(0);
   const motionObserverRef = useRef(null);
   const quickContactRef = useRef(null);
+  const sendAttemptRef = useRef(0);
+  const sendingSubmissionRef = useRef(null);
 
   useEffect(() => {
     if (brief) briefPreviewRef.current?.focus({ preventScroll: false });
@@ -137,7 +141,13 @@ export default function Home() {
     return () => { document.removeEventListener("keydown", closeOnEscape); document.removeEventListener("pointerdown", closeOutside); window.removeEventListener("resize", closeOnResize); };
   }, [menuOpen]);
 
-  const chooseService = name => { setSelectedServices(current => current.includes(name) ? current : [...current, name]); setBrief(null); };
+  const clearPreparedBrief = () => {
+    sendAttemptRef.current += 1;
+    setBrief(null);
+    setBriefPayload(null);
+    setSendState({ status: "idle", message: "" });
+  };
+  const chooseService = name => { setSelectedServices(current => current.includes(name) ? current : [...current, name]); clearPreparedBrief(); };
   const moveScene = event => {
     if (motionPaused || event.pointerType === "touch") return;
     const box = event.currentTarget.getBoundingClientRect();
@@ -149,6 +159,7 @@ export default function Home() {
   const resetScene = () => { window.cancelAnimationFrame(pointerFrameRef.current); sceneRef.current?.style.setProperty("--rx", "0deg"); sceneRef.current?.style.setProperty("--ry", "0deg"); };
   const prepareBrief = event => {
     event.preventDefault();
+    if (sendState.status === "sending") return;
     for (const field of ["name", "business", "goal"]) {
       const input = event.currentTarget.elements.namedItem(field);
       if (!input.value.trim()) {
@@ -158,12 +169,46 @@ export default function Home() {
       }
     }
     const data = new FormData(event.currentTarget);
+    sendAttemptRef.current += 1;
+    setBriefPayload({
+      name: data.get("name").trim(), business: data.get("business").trim(), email: data.get("email").trim(),
+      services: [...selectedServices], page: data.get("page").trim(), goal: data.get("goal").trim(),
+      company_url: String(data.get("company_url") || ""),
+      submissionId: window.crypto?.randomUUID?.() || `${Date.now()}-${Math.random().toString(36).slice(2)}-${Math.random().toString(36).slice(2)}`,
+    });
+    setSendState({ status: "idle", message: "" });
     const text = `Hi Xach Media, I’d like to discuss a project.\n\nName: ${data.get("name").trim()}\nBusiness: ${data.get("business").trim()}\nEmail: ${data.get("email").trim()}\nInterested in: ${selectedServices.length ? selectedServices.join(", ") : "Help choosing the right service"}\nCurrent page: ${data.get("page").trim() || "Not shared"}\n\nMy goal:\n${data.get("goal").trim()}`;
     setBrief(text); setCopyState("");
   };
   const copyBrief = async () => {
     try { await navigator.clipboard.writeText(brief); setCopyState("Brief copied."); }
     catch { setCopyState("Select and copy the text above to share your brief."); }
+  };
+  const sendBrief = async () => {
+    if (!briefPayload || sendState.status === "sending" || sendState.status === "sent" || sendingSubmissionRef.current === briefPayload.submissionId) return;
+    const attempt = ++sendAttemptRef.current;
+    const submissionId = briefPayload.submissionId;
+    sendingSubmissionRef.current = submissionId;
+    setSendState({ status: "sending", message: "Sending your enquiry to Xach Media…" });
+    const controller = new AbortController();
+    const timeout = window.setTimeout(() => controller.abort(), 20_000);
+    try {
+      const response = await fetch("/api/contact", {
+        method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(briefPayload), signal: controller.signal,
+      });
+      const result = await response.json().catch(() => null);
+      if (attempt !== sendAttemptRef.current) return;
+      if (!response.ok || result?.success !== true) {
+        setSendState({ status: "error", message: typeof result?.error === "string" ? result.error : "We couldn’t send your enquiry. Please try again, or use WhatsApp or the email draft below." });
+        return;
+      }
+      setSendState({ status: "sent", message: "Your enquiry has been sent to Xach Media. Thank you for getting in touch." });
+    } catch {
+      if (attempt === sendAttemptRef.current) setSendState({ status: "error", message: "We couldn’t confirm your email was sent. Please retry, or use WhatsApp or the email draft below. Your brief is still here." });
+    } finally {
+      window.clearTimeout(timeout);
+      if (sendingSubmissionRef.current === submissionId) sendingSubmissionRef.current = null;
+    }
   };
 
   return <div ref={siteRef} className={`agency-site${motionPaused ? " motion-paused" : ""}${menuOpen ? " menu-open" : ""}`}>
@@ -224,15 +269,15 @@ export default function Home() {
 
       <section className="studio-section section" id="studio"><div className="container studio-layout"><div className="founder-visual" data-reveal data-motion-region><div className="founder-visual-top"><span>XACH MEDIA</span><Star /></div><div className="founder-art"><span className="founder-monogram">AHK<span>CREATIVE DIRECTION.<br />BUSINESS INTENTION.</span></span><div className="founder-orbit" /><div className="founder-orbit orbit-offset" /></div><div className="founder-name"><h3>Abdul Hadi Khan</h3><span>CEO, Xach Media</span></div><img className="founder-banner" src="/abdul-hadi-khan-banner.png" alt="Abdul Hadi Khan, CEO of Xach Media — official brand banner" width="2172" height="724" loading="lazy" /></div><div className="studio-copy" data-reveal><span className="eyebrow">THE STUDIO BEHIND THE SCROLL</span><h2>A little bold.<br /><span>Very intentional.</span></h2><p className="studio-lead">Xach Media is built around a simple idea: a business with something to offer deserves a presence that shows it.</p><p>Led by Abdul Hadi Khan, we bring social media, reels, and online brand presence together with a clear creative direction. We care about how your brand looks, what it says, and how consistently it shows up.</p><div className="studio-values"><span><Icon name="check" size={16} />Ideas shaped around your business</span><span><Icon name="check" size={16} />A clear scope from the start</span><span><Icon name="check" size={16} />Creative that feels like your brand</span></div><a className="text-link" href="#contact">Meet your next creative partner</a></div></div></section>
 
-      <section className="faq-section section"><div className="container faq-layout"><div data-reveal><span className="eyebrow">A LITTLE CLARITY</span><h2>Good questions.<br /><span>Straight answers.</span></h2><p>Still have something on your mind?<br /><a href="mailto:xachmedia@gmail.com" className="text-link">Ask us directly</a></p></div><div className="faq-list">{faqs.map(([question, answer]) => <FaqItem key={question} question={question} answer={answer} />)}</div></div></section>
+      <section className="faq-section section"><div className="container faq-layout"><div data-reveal><span className="eyebrow">A LITTLE CLARITY</span><h2>Good questions.<br /><span>Straight answers.</span></h2><p>Still have something on your mind?<br /><a href="mailto:info@xachmedia.com" className="text-link">Ask us directly</a></p></div><div className="faq-list">{faqs.map(([question, answer]) => <FaqItem key={question} question={question} answer={answer} />)}</div></div></section>
 
-      <section className="contact-section section" id="contact"><div className="container"><div className="contact-head" data-reveal><span className="eyebrow">YOUR NEXT CHAPTER STARTS HERE</span><h2>Got a vision?<br /><span>Let’s give it presence.</span><Star /></h2></div><div className="contact-layout"><div className="contact-intro"><h3>Start with a conversation.</h3><p>Tell us a little about your business and what you have in mind. We’ll use that as the starting point for a plan.</p><a className="contact-direct" href="mailto:xachmedia@gmail.com"><Icon name="mail" /><span><small>DROP US A LINE</small>xachmedia@gmail.com</span></a><a className="contact-direct" href="tel:+923453186700"><Icon name="phone" /><span><small>LET’S TALK</small>0345 3186700</span></a><a className="contact-whatsapp" href="https://wa.me/923453186700" target="_blank" rel="noopener noreferrer"><Icon name="chat" size={20} />Prefer WhatsApp? Start here</a><div className="brief-note"><span>THE FIRST STEP</span><p>A few details. One useful conversation.<br />A clearer idea of what’s next.</p></div></div>
-          <div className="brief-card"><form onInput={event => event.target.setCustomValidity?.("")} onSubmit={prepareBrief} onChange={() => { if (brief) setBrief(null); }}><div className="form-title"><h3>Your project brief</h3><span>LET’S GET TO KNOW YOU</span></div><div className="form-fields"><label>Your name<input name="name" autoComplete="name" enterKeyHint="next" placeholder="What should we call you?" required maxLength={100} /></label><label>Business / brand<input name="business" autoComplete="organization" enterKeyHint="next" placeholder="Your business name" required maxLength={150} /></label><label className="full-field">Email address<input name="email" type="email" autoComplete="email" enterKeyHint="next" placeholder="you@yourbusiness.com" required maxLength={200} /></label></div><fieldset className="service-choices"><legend>What would you like help with?</legend><p className="service-choice-help">Choose any that apply. Unsure? You can leave this blank.</p><div>{services.map(service => <label className={selectedServices.includes(service.name) ? "is-checked" : ""} key={service.name}><input type="checkbox" name="services" value={service.name} checked={selectedServices.includes(service.name)} onChange={event => { setSelectedServices(current => event.target.checked ? [...current, service.name] : current.filter(value => value !== service.name)); setBrief(null); }} /><span><Icon name={selectedServices.includes(service.name) ? "check" : "plus"} size={14} />{service.short}</span></label>)}</div></fieldset><label className="form-label">Your page or website <span>(optional)</span><input name="page" type="text" inputMode="url" enterKeyHint="next" autoCapitalize="none" spellCheck={false} placeholder="instagram.com/yourbrand" maxLength={300} /></label><label className="form-label">What would you like to achieve?<textarea name="goal" rows={3} placeholder="A little about your business, your goals, or the idea you can’t stop thinking about…" required maxLength={3000} /></label><button type="submit" className="button brief-submit">Prepare my project brief</button><p className="form-help">You’ll review your brief, then choose WhatsApp or email to send it.</p></form>
-          {brief && <section className="brief-preview" ref={briefPreviewRef} tabIndex={-1} aria-label="Your prepared brief" aria-live="polite"><span className="eyebrow">READY WHEN YOU ARE</span><h3>Your conversation starter.</h3><label className="sr-only" htmlFor="prepared-brief">Prepared project brief</label><textarea id="prepared-brief" value={brief} readOnly rows={9} /><div className="brief-share"><a className="button" href={`https://wa.me/923453186700?text=${encodeURIComponent(brief)}`} target="_blank" rel="noopener noreferrer">Open in WhatsApp</a><a className="button button-outline" href={`mailto:xachmedia@gmail.com?subject=${encodeURIComponent("New project enquiry — Xach Media")}&body=${encodeURIComponent(brief)}`}>Open email draft</a><button className="copy-button" type="button" onClick={copyBrief}><Icon name="copy" size={17} />Copy brief</button></div><p role="status">{copyState || "Your chosen app opens with this draft. You send it when you’re ready."}</p></section>}
+      <section className="contact-section section" id="contact"><div className="container"><div className="contact-head" data-reveal><span className="eyebrow">YOUR NEXT CHAPTER STARTS HERE</span><h2>Got a vision?<br /><span>Let’s give it presence.</span><Star /></h2></div><div className="contact-layout"><div className="contact-intro"><h3>Start with a conversation.</h3><p>Tell us a little about your business and what you have in mind. We’ll use that as the starting point for a plan.</p><a className="contact-direct" href="mailto:info@xachmedia.com"><Icon name="mail" /><span><small>DROP US A LINE</small>info@xachmedia.com</span></a><a className="contact-direct" href="tel:+923453186700"><Icon name="phone" /><span><small>LET’S TALK</small>0345 3186700</span></a><a className="contact-whatsapp" href="https://wa.me/923453186700" target="_blank" rel="noopener noreferrer"><Icon name="chat" size={20} />Prefer WhatsApp? Start here</a><div className="brief-note"><span>THE FIRST STEP</span><p>A few details. One useful conversation.<br />A clearer idea of what’s next.</p></div></div>
+          <div className="brief-card"><form onInput={event => event.target.setCustomValidity?.("")} onSubmit={prepareBrief} onChange={() => { if (brief) clearPreparedBrief(); }}><fieldset className="brief-fields" disabled={sendState.status === "sending"}><label className="contact-honeypot" aria-hidden="true">Leave this field empty<input name="company_url" type="text" autoComplete="off" tabIndex={-1} /></label><div className="form-title"><h3>Your project brief</h3><span>LET’S GET TO KNOW YOU</span></div><div className="form-fields"><label>Your name<input name="name" autoComplete="name" enterKeyHint="next" placeholder="What should we call you?" required maxLength={100} /></label><label>Business / brand<input name="business" autoComplete="organization" enterKeyHint="next" placeholder="Your business name" required maxLength={150} /></label><label className="full-field">Email address<input name="email" type="email" autoComplete="email" enterKeyHint="next" placeholder="you@yourbusiness.com" required maxLength={200} /></label></div><fieldset className="service-choices"><legend>What would you like help with?</legend><p className="service-choice-help">Choose any that apply. Unsure? You can leave this blank.</p><div>{services.map(service => <label className={selectedServices.includes(service.name) ? "is-checked" : ""} key={service.name}><input type="checkbox" name="services" value={service.name} checked={selectedServices.includes(service.name)} onChange={event => { setSelectedServices(current => event.target.checked ? [...current, service.name] : current.filter(value => value !== service.name)); clearPreparedBrief(); }} /><span><Icon name={selectedServices.includes(service.name) ? "check" : "plus"} size={14} />{service.short}</span></label>)}</div></fieldset><label className="form-label">Your page or website <span>(optional)</span><input name="page" type="text" inputMode="url" enterKeyHint="next" autoCapitalize="none" spellCheck={false} placeholder="instagram.com/yourbrand" maxLength={300} /></label><label className="form-label">What would you like to achieve?<textarea name="goal" rows={3} placeholder="A little about your business, your goals, or the idea you can’t stop thinking about…" required maxLength={3000} /></label><button type="submit" className="button brief-submit">Prepare my project brief</button><p className="form-help">Review your brief, then send it directly to Xach Media or share it on WhatsApp.</p></fieldset></form>
+          {brief && <section className="brief-preview" ref={briefPreviewRef} tabIndex={-1} aria-label="Your prepared brief" aria-live="polite"><span className="eyebrow">READY WHEN YOU ARE</span><h3>Review your project brief.</h3><label className="sr-only" htmlFor="prepared-brief">Prepared project brief</label><textarea id="prepared-brief" value={brief} readOnly rows={9} /><button className="button direct-send-button" type="button" onClick={sendBrief} disabled={sendState.status === "sending" || sendState.status === "sent"} aria-describedby="email-send-status">{sendState.status === "sending" ? <span className="send-spinner" aria-hidden="true" /> : <Icon name={sendState.status === "sent" ? "check" : "mail"} size={19} />}{sendState.status === "sending" ? "Sending your brief…" : sendState.status === "sent" ? "Enquiry sent" : sendState.status === "error" ? "Try sending again" : "Send to Xach Media"}</button><p className={`email-send-status is-${sendState.status}`} id="email-send-status" role={sendState.status === "error" ? "alert" : "status"}>{sendState.message || "Ready? Send this brief to our team directly from the website."}</p><p className="brief-alternatives-label">Or share it another way</p><div className="brief-share"><a className="button button-outline" href={`https://wa.me/923453186700?text=${encodeURIComponent(brief)}`} target="_blank" rel="noopener noreferrer">Open in WhatsApp</a><a className="button button-outline" href={`mailto:info@xachmedia.com?subject=${encodeURIComponent("New project enquiry — Xach Media")}&body=${encodeURIComponent(brief)}`}>Open email draft</a><button className="copy-button" type="button" onClick={copyBrief}><Icon name="copy" size={17} />Copy brief</button></div><p role="status">{copyState || "Your chosen app opens with this draft. You send it when you’re ready."}</p></section>}
           </div>
         </div></div></section>
     </main>
     <nav className="mobile-contact-bar" ref={quickContactRef} aria-label="Quick contact"><a className="button" href="#contact">Start a project</a><a className="mobile-whatsapp" href="https://wa.me/923453186700" target="_blank" rel="noopener noreferrer"><Icon name="chat" size={19} />WhatsApp</a></nav>
-    <footer className="site-footer" data-motion-region><div className="footer-atmosphere" aria-hidden="true"><div className="footer-orbit orbit-primary" /><div className="footer-orbit orbit-secondary" /><div className="footer-light" /></div><div className="container"><div className="footer-invitation" data-reveal><div><span className="eyebrow">GOOD IDEAS DESERVE GOOD COMPANY.</span><a href="mailto:xachmedia@gmail.com" className="footer-email">Say hello.<Icon name="mail" size={38} /></a></div><a href="#contact" className="footer-seal" aria-label="Start your project with Xach Media"><Star /><span>YOUR NEXT<br />CHAPTER</span></a></div><div className="footer-top"><a className="wordmark" href="#home" aria-label="Xach Media home"><span className="logo-crop"><img src="/xach-purple-logo.png" alt="" width="52" height="52" loading="lazy" /></span><span>Xach<span className="wordmark-media">media</span></span></a><p>Ideas with direction.<br />Presence with personality.</p><div><a href="#creative">Creative ideas</a><a href="#services">Services</a><a href="#contact">Let’s talk</a></div></div><div className="footer-bottom"><span>© {year} Xach Media. All rights reserved.</span><span>Led by Abdul Hadi Khan.</span><a href="#home">Back to the beginning</a></div><div className="footer-giant" aria-hidden="true"><span className="footer-line-one">LET’S MAKE<Star /></span><span className="footer-line-two">AN IMPRESSION.</span></div></div><div className="footer-ticker" aria-hidden="true"><div>{[0,1].map(i => <span key={i}>STAY SEEN. <b>STAY REMEMBERED.</b> <Star /> XACH MEDIA <Star /></span>)}</div></div></footer>
+    <footer className="site-footer" data-motion-region><div className="footer-atmosphere" aria-hidden="true"><div className="footer-orbit orbit-primary" /><div className="footer-orbit orbit-secondary" /><div className="footer-light" /></div><div className="container"><div className="footer-invitation" data-reveal><div><span className="eyebrow">GOOD IDEAS DESERVE GOOD COMPANY.</span><a href="mailto:info@xachmedia.com" className="footer-email">Say hello.<Icon name="mail" size={38} /></a></div><a href="#contact" className="footer-seal" aria-label="Start your project with Xach Media"><Star /><span>YOUR NEXT<br />CHAPTER</span></a></div><div className="footer-top"><a className="wordmark" href="#home" aria-label="Xach Media home"><span className="logo-crop"><img src="/xach-purple-logo.png" alt="" width="52" height="52" loading="lazy" /></span><span>Xach<span className="wordmark-media">media</span></span></a><p>Ideas with direction.<br />Presence with personality.</p><div><a href="#creative">Creative ideas</a><a href="#services">Services</a><a href="#contact">Let’s talk</a></div></div><div className="footer-bottom"><span>© {year} Xach Media. All rights reserved.</span><span>Led by Abdul Hadi Khan.</span><a href="#home">Back to the beginning</a></div><div className="footer-giant" aria-hidden="true"><span className="footer-line-one">LET’S MAKE<Star /></span><span className="footer-line-two">AN IMPRESSION.</span></div></div><div className="footer-ticker" aria-hidden="true"><div>{[0,1].map(i => <span key={i}>STAY SEEN. <b>STAY REMEMBERED.</b> <Star /> XACH MEDIA <Star /></span>)}</div></div></footer>
   </div>;
 }

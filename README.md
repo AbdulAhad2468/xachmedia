@@ -6,7 +6,7 @@ This repository contains Xach Media’s main official agency website. Future wor
 
 - Agency: Xach Media
 - CEO: Abdul Hadi Khan
-- Email: xachmedia@gmail.com
+- Email: info@xachmedia.com
 - Phone / WhatsApp: +92 345 3186700
 - Services: social media management, reels and content creation, online business presence, and page growth
 - Visual identity: supplied purple metallic logo and black/purple brand artwork
@@ -26,7 +26,41 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000. The project form prepares a reviewable brief with WhatsApp, email, and copy options; it does not send messages automatically. Direct email, phone, and WhatsApp links are included.
+Open http://localhost:3000. The project form prepares a reviewable brief. Visitors can send it directly through Resend, open a WhatsApp or email draft, or copy it. Nothing is sent until the visitor chooses a send action.
+
+## Resend email setup
+
+The server route `POST /api/contact` sends project enquiries using the Resend HTTP API. No browser SDK or extra package is needed.
+
+1. Add and verify `xachmedia.com` in [Resend Domains](https://resend.com/domains). Add the DNS records shown by Resend to your domain’s DNS provider and wait for the sending domain to be verified. Use the values supplied for your account; do not replace your existing mailbox’s root MX records just to enable sending.
+2. Create a Resend API key with **Sending access**, restricted to `xachmedia.com` if desired.
+3. Copy `.env.example` to `.env.local`, then add the real API key. Keep `.env.local` out of Git.
+
+```dotenv
+RESEND_API_KEY=re_your_actual_resend_key
+RESEND_FROM_EMAIL=info@xachmedia.com
+CONTACT_TO_EMAIL=info@xachmedia.com
+```
+
+| Variable | What it does |
+| --- | --- |
+| `RESEND_API_KEY` | Secret Resend API key, used only on the server. |
+| `RESEND_FROM_EMAIL` | Bare sender address on the verified Resend domain. The email displays as `Xach Media <info@xachmedia.com>`. |
+| `CONTACT_TO_EMAIL` | Existing inbox that receives enquiries. Set this to `xachmedia@gmail.com` if your custom inbox is not ready. |
+
+For hosting, add these same three values to the project’s environment settings and redeploy. Locally, restart the Next.js server after changing them. Never prefix the key with `NEXT_PUBLIC_`.
+
+Verifying a domain for sending does not configure the receiving mailbox for this integration. Make sure the inbox named in `CONTACT_TO_EMAIL` can receive mail through your email provider. Visitor replies use the visitor’s email as `Reply-To`; the visitor’s address is never used as the sender.
+
+The form retains the brief on failures and offers retry, WhatsApp, and email-draft options. Retries of the same prepared brief reuse the Resend idempotency key. The API validates field lengths, escapes HTML, fixes the recipient in server configuration, and includes a honeypot and a per-process request guard. The request guard is not a shared limit across multiple server instances.
+
+Run the contact checks without an API key or sending real emails:
+
+```bash
+npm run test:contact
+```
+
+Official references: [Next.js integration](https://resend.com/docs/send-with-nextjs), [email API](https://resend.com/docs/api-reference/emails/send-email), and [domain verification](https://resend.com/docs/dashboard/domains/introduction).
 
 ## Production
 
