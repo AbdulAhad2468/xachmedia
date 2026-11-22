@@ -54,6 +54,8 @@ Verifying a domain for sending does not configure the receiving mailbox for this
 
 The form retains the brief on failures and offers retry, WhatsApp, and email-draft options. Retries of the same prepared brief reuse the Resend idempotency key, and concurrent retries share one provider operation. Successful responses include a Resend email reference for delivery troubleshooting.
 
+Rejected sends include a fixed diagnostic `code` in the API response and server log without exposing the provider response or API key. `EMAIL_API_KEY_INVALID` requires replacing the hosting API key; `EMAIL_DOMAIN_NOT_VERIFIED` requires verifying the exact sender domain in Resend; `EMAIL_API_KEY_RESTRICTED` requires checking the key's status and sending-domain access. `EMAIL_TEST_RECIPIENT_RESTRICTED` means the testing sender cannot send to the configured inbox. Quota and provider availability failures have separate codes. A successful API response confirms provider acceptance; use Resend's email delivery event to confirm inbox delivery.
+
 The API validates field lengths, escapes HTML, fixes the recipient in server configuration, and includes a honeypot and a per-process request guard. The normal allowance is five distinct accepted enquiries per visitor email and IP in ten minutes. Retrying a prepared brief does not use another submission slot, and failed provider sends release their slot. A separate thirty-attempt IP ceiling still limits repeated failures. Cooldown responses include the remaining wait in `Retry-After`. These limits are not shared across multiple server instances.
 
 Run the contact checks without an API key or sending real emails:

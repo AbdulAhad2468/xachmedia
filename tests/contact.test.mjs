@@ -119,6 +119,40 @@ test("provider rejection does not leak provider response content", async () => {
   assert.doesNotMatch(await result.text(), /private provider details/);
 });
 
+for (const [status, providerBody, expectedCode] of [
+  [401, { name: "validation_error", message: "API key is invalid" }, "EMAIL_API_KEY_INVALID"],
+  [400, { name: "validation_error", message: "API key is invalid" }, "EMAIL_API_KEY_INVALID"],
+  [401, { name: "missing_api_key" }, "EMAIL_API_KEY_INVALID"],
+  [403, { name: "suspended_api_key" }, "EMAIL_API_KEY_SUSPENDED"],
+  [403, { name: "restricted_api_key" }, "EMAIL_API_KEY_RESTRICTED"],
+  [403, { name: "invalid_permission" }, "EMAIL_API_KEY_RESTRICTED"],
+  [403, { name: "validation_error", message: "You can only send testing emails to your own email address (private@example.com). To send emails to other recipients, please verify a domain." }, "EMAIL_TEST_RECIPIENT_RESTRICTED"],
+  [403, { name: "validation_error", message: "The private.example.com domain is not verified. Please, add and verify your domain." }, "EMAIL_DOMAIN_NOT_VERIFIED"],
+  [429, { name: "daily_quota_exceeded" }, "EMAIL_QUOTA_EXCEEDED"],
+  [429, { name: "monthly_quota_exceeded" }, "EMAIL_QUOTA_EXCEEDED"],
+  [429, { name: "rate_limit_exceeded" }, "EMAIL_PROVIDER_RATE_LIMITED"],
+  [409, { name: "invalid_idempotent_request" }, "EMAIL_IDEMPOTENCY_CONFLICT"],
+  [503, { name: "service_unavailable" }, "EMAIL_PROVIDER_UNAVAILABLE"],
+  [200, {}, "EMAIL_PROVIDER_INVALID_RESPONSE"],
+  [422, { name: "unknown_private_error", message: "private provider details" }, "EMAIL_PROVIDER_REJECTED"],
+]) {
+  test(`provider diagnostics classify ${status} ${providerBody.name || "invalid success"} without exposing raw details`, async () => {
+    const logs = [];
+    const result = await handleContactRequest(request(), {
+      ...dependencies,
+      logger: { error: (...args) => logs.push(args) },
+      fetchImpl: async () => Response.json(providerBody, { status }),
+    });
+    assert.equal(result.status, 502);
+    const body = await result.json();
+    assert.equal(body.code, expectedCode);
+    assert.equal(body.success, undefined);
+    const diagnosticOutput = JSON.stringify({ body, logs });
+    assert.doesNotMatch(diagnosticOutput, /private|re_test_key|unknown_private_error/i);
+    assert.equal(logs[0][1].code, expectedCode);
+  });
+}
+
 test("does not claim success for a provider response without an email identifier", async () => {
   const result = await handleContactRequest(request(), { ...dependencies, fetchImpl: async () => Response.json({}) });
   assert.equal(result.status, 502);
