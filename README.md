@@ -24,7 +24,7 @@ The concept gallery uses a three-column desktop layout, paired artwork and descr
 
 ## Search-engine files
 
-Next.js metadata routes generate `/sitemap.xml` from `app/sitemap.js` and `/robots.txt` from `app/robots.js`. The sitemap includes the canonical homepage at `https://www.xachmedia.com/`; section anchors are not separate pages. Robots allows public pages and rendering assets, excludes `/api/`, and declares the sitemap. The layout sets the canonical URL and social sharing metadata. Robots directives guide crawlers; they do not restrict API access.
+Next.js metadata routes generate `/sitemap.xml` from `app/sitemap.js` and `/robots.txt` from `app/robots.js`. The sitemap includes the canonical homepage plus `/about`, `/services`, `/creative`, and `/contact`. Section anchors are not separate pages. Robots allows public pages and rendering assets, excludes `/api/`, and declares the sitemap. The layout sets the canonical URL and social sharing metadata. Robots directives guide crawlers; they do not restrict API access.
 
 ## Run locally
 
