@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createEnquiryEmail, handleContactRequest } from "../lib/contact.mjs";
+import { createContactRateLimiter } from "../lib/contact-rate-limit.mjs";
 
 const env = {
   RESEND_API_KEY: "re_test_key_not_a_real_secret",
@@ -129,4 +130,79 @@ test("network failure preserves retry guidance without exposing internal errors"
   const body = await result.json();
   assert.match(body.error, /retry/i);
   assert.doesNotMatch(body.error, /internal details/);
+});
+
+const proxyHeaders = { "x-forwarded-for": "203.0.113.20" };
+const numberedPayload = index => ({ ...payload, submissionId: `${payload.submissionId}-${index}` });
+
+for (const failure of ["provider rejection", "network failure"]) {
+  test(`${failure} does not exhaust the successful-enquiry allowance`, async () => {
+    let calls = 0;
+    const deps = { ...dependencies, rateLimit: createContactRateLimiter(), fetchImpl: async () => {
+      calls += 1;
+      if (calls <= 6) {
+        if (failure === "network failure") throw new Error("connection failed");
+        return Response.json({ error: "not configured yet" }, { status: 403 });
+      }
+      return Response.json({ id: "now-working" });
+    } };
+    for (let index = 0; index < 6; index += 1) {
+      assert.equal((await handleContactRequest(request(numberedPayload(index), proxyHeaders), deps)).status, 502);
+    }
+    assert.equal((await handleContactRequest(request(numberedPayload(6), proxyHeaders), deps)).status, 200);
+    assert.equal(calls, 7);
+  });
+}
+
+test("retries of one accepted brief use only one submission slot", async () => {
+  const deps = { ...dependencies, rateLimit: createContactRateLimiter(), fetchImpl: async () => Response.json({ id: "accepted-email" }) };
+  for (let index = 0; index < 6; index += 1) assert.equal((await handleContactRequest(request(payload, proxyHeaders), deps)).status, 200);
+  for (let index = 0; index < 4; index += 1) assert.equal((await handleContactRequest(request(numberedPayload(index), proxyHeaders), deps)).status, 200);
+  assert.equal((await handleContactRequest(request(numberedPayload(5), proxyHeaders), deps)).status, 429);
+});
+
+test("different visitors behind one proxy have separate normal enquiry allowances", async () => {
+  const deps = { ...dependencies, rateLimit: createContactRateLimiter(), fetchImpl: async () => Response.json({ id: "accepted" }) };
+  for (let index = 0; index < 5; index += 1) assert.equal((await handleContactRequest(request(numberedPayload(index), proxyHeaders), deps)).status, 200);
+  assert.equal((await handleContactRequest(request({ ...numberedPayload(6), email: "another@example.com" }, proxyHeaders), deps)).status, 200);
+});
+
+test("simultaneous retries share one in-flight provider request", async () => {
+  let calls = 0;
+  let finish;
+  let started;
+  const providerStarted = new Promise(resolve => { started = resolve; });
+  const providerResponse = new Promise(resolve => { finish = resolve; });
+  const deps = { ...dependencies, inFlight: new Map(), rateLimit: createContactRateLimiter(), fetchImpl: async () => { calls += 1; started(); return providerResponse; } };
+  const first = handleContactRequest(request(payload, proxyHeaders), deps);
+  await providerStarted;
+  const second = handleContactRequest(request(payload, proxyHeaders), deps);
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(calls, 1);
+  finish(Response.json({ id: "one-provider-request" }));
+  const results = await Promise.all([first, second]);
+  for (const result of results) {
+    assert.equal(result.status, 200);
+    assert.equal((await result.json()).reference, "one-provider-request");
+  }
+});
+
+test("the cooldown reports remaining seconds and expires normally", async () => {
+  let clock = 1_000;
+  const deps = { ...dependencies, rateLimit: createContactRateLimiter({ now: () => clock }), fetchImpl: async () => Response.json({ id: "accepted" }) };
+  for (let index = 0; index < 5; index += 1) await handleContactRequest(request(numberedPayload(index), proxyHeaders), deps);
+  clock += 60_000;
+  const limited = await handleContactRequest(request(numberedPayload(6), proxyHeaders), deps);
+  assert.equal(limited.status, 429);
+  assert.equal(limited.headers.get("Retry-After"), "540");
+  clock += 540_001;
+  assert.equal((await handleContactRequest(request(numberedPayload(7), proxyHeaders), deps)).status, 200);
+});
+
+test("a separate attempt limit still bounds repeated provider failures", async () => {
+  let calls = 0;
+  const deps = { ...dependencies, rateLimit: createContactRateLimiter({ maxAttempts: 3 }), fetchImpl: async () => { calls += 1; throw new Error("network failure"); } };
+  for (let index = 0; index < 3; index += 1) assert.equal((await handleContactRequest(request(numberedPayload(index), proxyHeaders), deps)).status, 502);
+  assert.equal((await handleContactRequest(request(numberedPayload(4), proxyHeaders), deps)).status, 429);
+  assert.equal(calls, 3);
 });

@@ -52,7 +52,9 @@ For hosting, add these same three values to the project’s environment settings
 
 Verifying a domain for sending does not configure the receiving mailbox for this integration. Make sure the inbox named in `CONTACT_TO_EMAIL` can receive mail through your email provider. Visitor replies use the visitor’s email as `Reply-To`; the visitor’s address is never used as the sender.
 
-The form retains the brief on failures and offers retry, WhatsApp, and email-draft options. Retries of the same prepared brief reuse the Resend idempotency key. The API validates field lengths, escapes HTML, fixes the recipient in server configuration, and includes a honeypot and a per-process request guard. The request guard is not a shared limit across multiple server instances.
+The form retains the brief on failures and offers retry, WhatsApp, and email-draft options. Retries of the same prepared brief reuse the Resend idempotency key, and concurrent retries share one provider operation. Successful responses include a Resend email reference for delivery troubleshooting.
+
+The API validates field lengths, escapes HTML, fixes the recipient in server configuration, and includes a honeypot and a per-process request guard. The normal allowance is five distinct accepted enquiries per visitor email and IP in ten minutes. Retrying a prepared brief does not use another submission slot, and failed provider sends release their slot. A separate thirty-attempt IP ceiling still limits repeated failures. Cooldown responses include the remaining wait in `Retry-After`. These limits are not shared across multiple server instances.
 
 Run the contact checks without an API key or sending real emails:
 
