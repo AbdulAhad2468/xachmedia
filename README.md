@@ -5,6 +5,7 @@ This repository contains Xach Media’s main official agency website. Future wor
 ## Brand facts
 
 - Agency: Xach Media
+- Slogan: Turn attention into connection.
 - CEO: Abdul Hadi Khan
 - Email: info@xachmedia.com
 - Phone / WhatsApp: +92 345 3186700
@@ -15,9 +16,15 @@ This repository contains Xach Media’s main official agency website. Future wor
 
 Responsive Next.js site with a dimensional brand scene, coordinated section transitions, a motion pause control, and reduced-motion support. Decorative animation pauses outside the viewport and when the page is hidden.
 
-On mobile, the site has a swipeable concept gallery, compact service choices, accessible animated navigation, and quick contact actions. The FAQ uses animated, keyboard-accessible disclosures. A rounded purple X favicon is supplied as SVG and PNG, with an Apple touch icon.
+On mobile, the site has a stacked concept gallery, compact service choices, accessible animated navigation, and quick contact actions. The menu locks background scrolling while open. The FAQ uses animated, keyboard-accessible disclosures. A rounded purple X favicon is supplied as SVG and PNG, with an Apple touch icon.
 
-Creative examples are labelled studio concepts and should not be presented as client results. Add real case studies, testimonials, or numerical results only when supplied or verified.
+Creative examples are labelled studio concepts and should not be presented as client results. The NŪRA skincare and OFFSCRIPT fashion brands are fictional creative exercises, alongside Xach Media's own motion direction. Each concept includes its rationale and suggested formats. Add real case studies, testimonials, or numerical results only when supplied or verified.
+
+The concept gallery uses a three-column desktop layout, paired artwork and descriptions on tablets, and stacked cards on phones. Filtering keeps the cards mounted so offscreen animation pausing continues to work; native disclosures expose each creative direction to keyboard and touch users. Reduced-motion and the site-wide pause control apply to the new artwork too. The studio name artwork displays Abdul Hadi Khan in full.
+
+## Search-engine files
+
+Next.js metadata routes generate `/sitemap.xml` from `app/sitemap.js` and `/robots.txt` from `app/robots.js`. The sitemap includes the canonical homepage at `https://www.xachmedia.com/`; section anchors are not separate pages. Robots allows public pages and rendering assets, excludes `/api/`, and declares the sitemap. The layout sets the canonical URL and social sharing metadata. Robots directives guide crawlers; they do not restrict API access.
 
 ## Run locally
 

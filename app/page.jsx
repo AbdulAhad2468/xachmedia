@@ -1,18 +1,13 @@
 "use client";
 
 import { useEffect, useId, useRef, useState } from "react";
+import StudioConcepts from "./StudioConcepts";
 
 const services = [
   { name: "Social media management", short: "Social presence", icon: "social", headline: "Your brand, showing up as it should.", description: "Give your pages a consistent voice and a considered visual direction. We shape the content around your business, your audience, and what you want to say.", deliverables: ["Content direction & planning", "Social graphics & captions", "Publishing rhythm", "Page presentation & consistency"], tags: ["CONTENT CALENDARS", "BRAND VOICE", "CONSISTENCY"] },
   { name: "Reels & content creation", short: "Reels & creative", icon: "reels", headline: "A strong first second. A story worth staying for.", description: "Bring your business to life with short content made for the way people watch. From the opening hook to the final frame, every detail has a purpose.", deliverables: ["Creative concepts & hooks", "Short-form storyboards", "Video editing & pacing", "Social-ready content formats"], tags: ["REELS", "STORYTELLING", "SHORT-FORM"] },
   { name: "Online business presence", short: "Brand presence", icon: "brand", headline: "Recognizable, wherever people find you.", description: "Connect the dots between your message, your visuals, and your pages. Build a brand presence that feels considered from the first look to the next conversation.", deliverables: ["Profile & page direction", "Visual consistency", "Brand messaging", "Online touchpoint review"], tags: ["IDENTITY", "MESSAGING", "FIRST IMPRESSIONS"] },
   { name: "Strategy & page growth", short: "Strategy & growth", icon: "growth", headline: "A clear plan. Room to keep getting better.", description: "Start with your goals, understand your audience, and give your content a direction. Review what connects and use those insights to shape the next cycle.", deliverables: ["Audience & content direction", "Campaign planning", "Content performance review", "Recommendations for the next cycle"], tags: ["DIRECTION", "INSIGHTS", "PAGE GROWTH"] },
-];
-
-const concepts = [
-  { type: "Social", name: "A fresh take on flavour.", category: "Food & lifestyle / Social direction", className: "concept-citrus", subtitle: "A LITTLE ZEST.", title: <>A lot of<br />flavour.</>, mark: "ZEST", note: "Fresh ideas. Served daily." },
-  { type: "Brand", name: "Made to stand apart.", category: "Fashion & culture / Brand presence", className: "concept-studio", subtitle: "INDIVIDUAL BY DESIGN", title: <>Wear your<br /><em>own world.</em></>, mark: "FORME", note: "For the ones who do it their way." },
-  { type: "Motion", name: "A brand with momentum.", category: "Xach Media / Motion direction", className: "concept-xach", subtitle: "IDEAS DON'T STAND STILL.", title: <>Neither<br />do we.</>, mark: "XACH", note: "Strategy. Creativity. Presence." },
 ];
 
 const faqs = [
@@ -57,7 +52,6 @@ function FaqItem({ question, answer }) {
 export default function Home() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [activeService, setActiveService] = useState(0);
-  const [conceptFilter, setConceptFilter] = useState("All concepts");
   const [motionPaused, setMotionPaused] = useState(false);
   const [systemReducedMotion, setSystemReducedMotion] = useState(false);
   const [compactNavigation, setCompactNavigation] = useState(false);
@@ -74,7 +68,7 @@ export default function Home() {
   const briefPreviewRef = useRef(null);
   const siteRef = useRef(null);
   const pointerFrameRef = useRef(0);
-  const motionObserverRef = useRef(null);
+
   const quickContactRef = useRef(null);
   const sendAttemptRef = useRef(0);
   const sendingSubmissionRef = useRef(null);
@@ -100,7 +94,7 @@ export default function Home() {
     }), { threshold: 0.08 });
     document.querySelectorAll("[data-reveal]").forEach(element => { element.classList.add("reveal-ready"); observer.observe(element); });
     const motionObserver = new IntersectionObserver(entries => entries.forEach(entry => entry.target.classList.toggle("motion-offscreen", !entry.isIntersecting)), { rootMargin: "140px 0px" });
-    motionObserverRef.current = motionObserver;
+
     document.querySelectorAll("[data-motion-region]").forEach(element => motionObserver.observe(element));
     const syncVisibility = () => siteRef.current?.classList.toggle("page-inactive", document.hidden);
     document.addEventListener("visibilitychange", syncVisibility);
@@ -125,10 +119,11 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    const cards = document.querySelectorAll(".concept-card[data-motion-region]");
-    cards.forEach(card => motionObserverRef.current?.observe(card));
-    return () => cards.forEach(card => motionObserverRef.current?.unobserve(card));
-  }, [conceptFilter]);
+    if (!menuOpen || !compactNavigation) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = previousOverflow; };
+  }, [menuOpen, compactNavigation]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -225,9 +220,9 @@ export default function Home() {
 
     <main id="main">
       <section className="hero" id="home" data-motion-region><div className="container">
-        <div className="hero-topline"><span className="eyebrow">DIGITAL MARKETING & CREATIVE AGENCY</span><span className="hero-top-note">Built on ideas. Driven by your next chapter.</span></div>
+        <div className="hero-topline"><span className="eyebrow">DIGITAL MARKETING & CREATIVE AGENCY</span><span className="hero-top-note">Strategy, story, and a little creative conviction.</span></div>
         <div className="hero-grid">
-          <div className="hero-copy"><h1>Be seen.<br /><span>Be remembered.</span></h1><p>Social media, standout reels, and a sharper online presence for the business you’re building.</p><div className="hero-actions"><a className="button" href="#contact">Start your project</a><a className="text-link" href="#creative">Explore the creative</a></div><div className="hero-signature"><span className="signature-line" /><span>STRATEGY MEETS A LITTLE<br /><strong>CREATIVE OBSESSION.</strong></span></div></div>
+          <div className="hero-copy"><h1 className="brand-slogan">Turn attention<br /><span>into connection.</span></h1><p>Social media, standout reels, and a sharper online presence. Make your business look the part—and give people a reason to care.</p><div className="hero-actions"><a className="button" href="#contact">Start your project</a><a className="text-link" href="#creative">Explore the creative</a></div><div className="hero-signature"><span className="signature-line" /><span>STRATEGY MEETS A LITTLE<br /><strong>CREATIVE OBSESSION.</strong></span></div></div>
           <div className="hero-scene" onPointerMove={moveScene} onPointerLeave={resetScene} aria-label="Xach Media brand in motion">
             <div className="scene-grid" aria-hidden="true" /><div className="scene-glow" aria-hidden="true" />
             <div className="scene-object" ref={sceneRef}><div className="orbital-ring ring-one" /><div className="orbital-ring ring-two" /><div className="brand-disc"><div className="disc-edge" /><img src="/xach-purple-logo.png" alt="Xach Media purple metallic emblem" width="400" height="400" fetchPriority="high" /><div className="disc-sheen" /></div><div className="scene-satellite satellite-one"><Star /></div><div className="scene-satellite satellite-two" /></div>
@@ -240,16 +235,7 @@ export default function Home() {
       </div></section>
       <div className="marquee" data-motion-region aria-label="Strategy, social media, reels, brand presence"><div className="marquee-track">{[0,1].map(group => <div className="marquee-group" key={group} aria-hidden={group === 1 ? true : undefined}>{["Ideas that connect", "Content with character", "Presence with purpose"].map(word => <span key={word}><Star />{word}</span>)}</div>)}</div></div>
 
-      <section className="creative-section section" id="creative"><div className="container">
-        <div className="section-heading" data-reveal><div><span className="eyebrow">A TASTE OF THE CREATIVE</span><h2>Big ideas.<br /><span>Distinctly expressed.</span></h2></div><p>A feeling, a story, a reason to stop scrolling. Explore the possibilities when your brand has a point of view.</p></div>
-        <div className="creative-toolbar"><span className="concept-label">STUDIO CONCEPTS</span><div className="filter-group" aria-label="Filter studio concepts">{["All concepts", "Social", "Brand", "Motion"].map(filter => <button key={filter} aria-pressed={conceptFilter === filter} className={conceptFilter === filter ? "is-selected" : ""} onClick={() => setConceptFilter(filter)}>{filter}</button>)}</div></div>
-        {conceptFilter === "All concepts" && <p className="gallery-hint">Swipe to explore the concepts</p>}
-        <div className={`concept-grid${conceptFilter !== "All concepts" ? " is-filtered" : ""}`} role="region" aria-label="Studio concept gallery" tabIndex={compactServices && conceptFilter === "All concepts" ? 0 : undefined} aria-live="polite">{concepts.filter(concept => conceptFilter === "All concepts" || concept.type === conceptFilter).map(concept => <article className="concept-card" key={concept.name} data-motion-region>
-          <div className={`concept-art ${concept.className}`}><div className="concept-art-header"><strong>{concept.mark}</strong><span>STUDIO<br />CONCEPT</span></div><div className="concept-graphic" aria-hidden="true">{concept.type === "Social" ? <><div className="citrus-leaf" /><div className="citrus-fruit" /><div className="citrus-slice" /></> : concept.type === "Brand" ? <><div className="chrome-orb" /><div className="chrome-orbit" /><div className="poster-grid" /></> : <><div className="motion-ribbon ribbon-a" /><div className="motion-ribbon ribbon-b" /><Star className="poster-star" /></>}</div><div className="concept-art-copy"><span>{concept.subtitle}</span><h3>{concept.title}</h3></div><div className="concept-art-footer"><span>{concept.note}</span><span className="concept-symbol">✳</span></div></div>
-          <div className="concept-description"><span>{concept.category}</span><h3>{concept.name}</h3></div>
-        </article>)}</div>
-        <p className="concept-disclaimer">Original studio concepts to demonstrate creative direction. These are illustrative examples, rather than client case studies.</p>
-      </div></section>
+      <StudioConcepts />
 
       <section className="services-section section" id="services"><div className="container">
         <div className="section-heading" data-reveal><div><span className="eyebrow">WHAT WE BRING TO THE TABLE</span><h2>One creative partner.<br /><span>A connected presence.</span></h2></div><p>Start where your business needs us. Build a plan that connects your story, your content, and your next move.</p></div>
@@ -267,7 +253,7 @@ export default function Home() {
           { title: "Keep moving forward.", text: "We review what connects, gather the learning, and use it to guide the next round of creative.", label: "REFINEMENT" },
         ].map(step => <article className="process-step" key={step.label} data-reveal><div className="process-marker"><span /></div><div><span className="eyebrow">{step.label}</span><h3>{step.title}</h3><p>{step.text}</p></div></article>)}</div></div></section>
 
-      <section className="studio-section section" id="studio"><div className="container studio-layout"><div className="founder-visual" data-reveal data-motion-region><div className="founder-visual-top"><span>XACH MEDIA</span><Star /></div><div className="founder-art"><span className="founder-monogram">AHK<span>CREATIVE DIRECTION.<br />BUSINESS INTENTION.</span></span><div className="founder-orbit" /><div className="founder-orbit orbit-offset" /></div><div className="founder-name"><h3>Abdul Hadi Khan</h3><span>CEO, Xach Media</span></div><img className="founder-banner" src="/abdul-hadi-khan-banner.png" alt="Abdul Hadi Khan, CEO of Xach Media — official brand banner" width="2172" height="724" loading="lazy" /></div><div className="studio-copy" data-reveal><span className="eyebrow">THE STUDIO BEHIND THE SCROLL</span><h2>A little bold.<br /><span>Very intentional.</span></h2><p className="studio-lead">Xach Media is built around a simple idea: a business with something to offer deserves a presence that shows it.</p><p>Led by Abdul Hadi Khan, we bring social media, reels, and online brand presence together with a clear creative direction. We care about how your brand looks, what it says, and how consistently it shows up.</p><div className="studio-values"><span><Icon name="check" size={16} />Ideas shaped around your business</span><span><Icon name="check" size={16} />A clear scope from the start</span><span><Icon name="check" size={16} />Creative that feels like your brand</span></div><a className="text-link" href="#contact">Meet your next creative partner</a></div></div></section>
+      <section className="studio-section section" id="studio"><div className="container studio-layout"><div className="founder-visual" data-reveal data-motion-region><div className="founder-visual-top"><span>XACH MEDIA</span><Star /></div><div className="founder-art"><div className="founder-full-name" aria-hidden="true"><span>Abdul Hadi</span><span>Khan<span className="founder-name-star">✳</span></span><small>CLEAR DIRECTION.<br />CREATIVE CONVICTION.</small></div><div className="founder-orbit" /><div className="founder-orbit orbit-offset" /><div className="founder-light" /></div><div className="founder-name"><h3>Abdul Hadi Khan</h3><span>CEO, Xach Media</span></div></div><div className="studio-copy" data-reveal><span className="eyebrow">THE STUDIO BEHIND THE SCROLL</span><h2>A little bold.<br /><span>Very intentional.</span></h2><p className="studio-lead">Xach Media is built around a simple idea: a business with something to offer deserves a presence that shows it.</p><p>Led by Abdul Hadi Khan, we bring social media, reels, and online brand presence together with a clear creative direction. We care about how your brand looks, what it says, and how consistently it shows up.</p><div className="studio-values"><span><Icon name="check" size={16} />Ideas shaped around your business</span><span><Icon name="check" size={16} />A clear scope from the start</span><span><Icon name="check" size={16} />Creative that feels like your brand</span></div><a className="text-link" href="#contact">Meet your next creative partner</a></div></div></section>
 
       <section className="faq-section section"><div className="container faq-layout"><div data-reveal><span className="eyebrow">A LITTLE CLARITY</span><h2>Good questions.<br /><span>Straight answers.</span></h2><p>Still have something on your mind?<br /><a href="mailto:info@xachmedia.com" className="text-link">Ask us directly</a></p></div><div className="faq-list">{faqs.map(([question, answer]) => <FaqItem key={question} question={question} answer={answer} />)}</div></div></section>
 
@@ -278,6 +264,6 @@ export default function Home() {
         </div></div></section>
     </main>
     <nav className="mobile-contact-bar" ref={quickContactRef} aria-label="Quick contact"><a className="button" href="#contact">Start a project</a><a className="mobile-whatsapp" href="https://wa.me/923453186700" target="_blank" rel="noopener noreferrer"><Icon name="chat" size={19} />WhatsApp</a></nav>
-    <footer className="site-footer" data-motion-region><div className="footer-atmosphere" aria-hidden="true"><div className="footer-orbit orbit-primary" /><div className="footer-orbit orbit-secondary" /><div className="footer-light" /></div><div className="container"><div className="footer-invitation" data-reveal><div><span className="eyebrow">GOOD IDEAS DESERVE GOOD COMPANY.</span><a href="mailto:info@xachmedia.com" className="footer-email">Say hello.<Icon name="mail" size={38} /></a></div><a href="#contact" className="footer-seal" aria-label="Start your project with Xach Media"><Star /><span>YOUR NEXT<br />CHAPTER</span></a></div><div className="footer-top"><a className="wordmark" href="#home" aria-label="Xach Media home"><span className="logo-crop"><img src="/xach-purple-logo.png" alt="" width="52" height="52" loading="lazy" /></span><span>Xach<span className="wordmark-media">media</span></span></a><p>Ideas with direction.<br />Presence with personality.</p><div><a href="#creative">Creative ideas</a><a href="#services">Services</a><a href="#contact">Let’s talk</a></div></div><div className="footer-bottom"><span>© {year} Xach Media. All rights reserved.</span><span>Led by Abdul Hadi Khan.</span><a href="#home">Back to the beginning</a></div><div className="footer-giant" aria-hidden="true"><span className="footer-line-one">LET’S MAKE<Star /></span><span className="footer-line-two">AN IMPRESSION.</span></div></div><div className="footer-ticker" aria-hidden="true"><div>{[0,1].map(i => <span key={i}>STAY SEEN. <b>STAY REMEMBERED.</b> <Star /> XACH MEDIA <Star /></span>)}</div></div></footer>
+    <footer className="site-footer" data-motion-region><div className="footer-atmosphere" aria-hidden="true"><div className="footer-orbit orbit-primary" /><div className="footer-orbit orbit-secondary" /><div className="footer-light" /></div><div className="container"><div className="footer-invitation" data-reveal><div><span className="eyebrow">GOOD IDEAS DESERVE GOOD COMPANY.</span><a href="mailto:info@xachmedia.com" className="footer-email">Say hello.<Icon name="mail" size={38} /></a></div><a href="#contact" className="footer-seal" aria-label="Start your project with Xach Media"><Star /><span>YOUR NEXT<br />CHAPTER</span></a></div><div className="footer-top"><a className="wordmark" href="#home" aria-label="Xach Media home"><span className="logo-crop"><img src="/xach-purple-logo.png" alt="" width="52" height="52" loading="lazy" /></span><span>Xach<span className="wordmark-media">media</span></span></a><p className="footer-brand-slogan">Turn attention<br />into connection.</p><div><a href="#creative">Creative ideas</a><a href="#services">Services</a><a href="#contact">Let’s talk</a></div></div><div className="footer-bottom"><span>© {year} Xach Media. All rights reserved.</span><span>Led by Abdul Hadi Khan.</span><a href="#home">Back to the beginning</a></div><div className="footer-giant" aria-hidden="true"><span className="footer-line-one">LET’S MAKE<Star /></span><span className="footer-line-two">AN IMPRESSION.</span></div></div><div className="footer-ticker" aria-hidden="true"><div>{[0,1].map(i => <span key={i}>TURN ATTENTION. <b>INTO CONNECTION.</b> <Star /> XACH MEDIA <Star /></span>)}</div></div></footer>
   </div>;
 }
