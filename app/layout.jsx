@@ -25,6 +25,31 @@ export const metadata = {
   },
 };
 
+const brandSchema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://www.xachmedia.com/#organization",
+      "name": "Xach Media",
+      "url": "https://www.xachmedia.com/",
+      "logo": "https://www.xachmedia.com/xach-purple-logo.png",
+      "slogan": "Turn attention into connection.",
+      "email": "info@xachmedia.com",
+      "telephone": "+923453186700"
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://www.xachmedia.com/#website",
+      "name": "Xach Media",
+      "url": "https://www.xachmedia.com/",
+      "publisher": {
+        "@id": "https://www.xachmedia.com/#organization"
+      }
+    }
+  ]
+};
+
 export default function RootLayout({ children }) {
-  return <html lang="en"><head><link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" /></head><body>{children}</body></html>;
+  return <html lang="en"><head><link rel="preconnect" href="https://fonts.googleapis.com" /><link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" /></head><body><script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(brandSchema).replace(/</g, "\u003c") }} />{children}</body></html>;
 }

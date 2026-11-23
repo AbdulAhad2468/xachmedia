@@ -1,19 +1,19 @@
 import AgencyPage from '../AgencyPage';
 export const metadata = {
   "title": "Contact | Xach Media",
-  "description": "Tell us your business name, share a page link if you have one, and let us know what you would like to improve.",
+  "description": "Contact Xach Media at info@xachmedia.com or +92 345 3186700 for social media management, reels, and creative direction. Tell us about your project.",
   "alternates": {
     "canonical": "/contact"
   },
   "openGraph": {
     "title": "Contact | Xach Media",
-    "description": "Tell us your business name, share a page link if you have one, and let us know what you would like to improve.",
+    "description": "Contact Xach Media at info@xachmedia.com or +92 345 3186700 for social media management, reels, and creative direction. Tell us about your project.",
     "url": "/contact"
   }
 };
 const content = {
   "eyebrow": "YOUR NEXT CHAPTER STARTS HERE",
-  "title": "Start with a conversation.",
+  "title": "Contact Xach Media.",
   "intro": "Tell us your business name, share a page link if you have one, and let us know what you would like to improve.",
   "contact": true,
   "items": [

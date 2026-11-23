@@ -13,7 +13,7 @@ export const metadata = {
 };
 const content = {
   "eyebrow": "THE STUDIO BEHIND THE SCROLL",
-  "title": "A little bold. Very intentional.",
+  "title": "About Xach Media.",
   "intro": "Xach Media brings social media, reels, and online brand presence together with a clear creative direction.",
   "items": [
     {
