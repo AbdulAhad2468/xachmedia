@@ -2,7 +2,7 @@ import './globals.css';
 
 export const metadata = {
   metadataBase: new URL('https://www.xachmedia.com'),
-  title: 'Xach Media | Turn attention into connection.',
+  title: 'Xach Media | Social Media & Creative Agency',
   description: 'Turn attention into connection with Xach Media. Social media management, reels, creative direction, and online brand presence for the business you’re building.',
   alternates: { canonical: '/' },
   openGraph: {
@@ -36,7 +36,8 @@ const brandSchema = {
       "logo": "https://www.xachmedia.com/xach-purple-logo.png",
       "slogan": "Turn attention into connection.",
       "email": "info@xachmedia.com",
-      "telephone": "+923453186700"
+      "telephone": "+923453186700",
+      "employee": { "@type": "Person", "name": "Abdul Hadi Khan", "jobTitle": "CEO" }
     },
     {
       "@type": "WebSite",

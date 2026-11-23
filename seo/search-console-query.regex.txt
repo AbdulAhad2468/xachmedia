@@ -1,0 +1,1 @@
+(?i)(xach(?:\s*media)?|abdul\s+hadi(?:\s+khan)?)

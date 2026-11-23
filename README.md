@@ -24,7 +24,7 @@ The concept gallery uses a three-column desktop layout, paired artwork and descr
 
 ## Search-engine files
 
-Next.js metadata routes generate `/sitemap.xml` from `app/sitemap.js` and `/robots.txt` from `app/robots.js`. The sitemap includes the canonical homepage plus `/about`, `/services`, `/creative`, and `/contact`. Section anchors are not separate pages. Robots allows public pages and rendering assets, excludes `/api/`, and declares the sitemap. The layout sets the canonical URL and social sharing metadata. Robots directives guide crawlers; they do not restrict API access.
+Next.js metadata routes generate `/sitemap.xml` from `app/sitemap.js` and `/robots.txt` from `app/robots.js`. The sitemap includes the canonical homepage plus `/about`, `/services`, `/creative`, `/contact`, and `/faq`. Section anchors are not separate pages. Robots allows public pages and rendering assets, excludes `/api/`, and declares the sitemap. The layout sets the canonical URL and social sharing metadata. Robots directives guide crawlers; they do not restrict API access.
 
 ## Run locally
 
@@ -81,3 +81,5 @@ npm start
 ```
 
 Stop the dev server before a production build so both commands do not write to the same generated cache. The `.next` directory and local preview screenshots are excluded from Git.
+
+Search Console report regex patterns and setup steps are in `seo/README.md`. The shared FAQ data in `lib/faqs.mjs` powers the homepage FAQ and `/faq`, including Abdul Hadi Khan as CEO.
